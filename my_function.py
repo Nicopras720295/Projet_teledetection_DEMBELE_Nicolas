@@ -1,29 +1,31 @@
-import sys
 import os
-
-# Ajoute le dossier parent au chemin de recherche de Python
-sys.path.append(os.path.abspath("/home/onyxia/work"))
-
-# Maintenant, l'import fonctionnera
-import libsigma.read_and_write as rw
-
 import numpy as np
-import matplotlib.pyplot as plt
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import GridSearchCV, KFold
-from sklearn.metrics import classification_report, accuracy_score
+import pandas as pd
+from osgeo import gdal
 
-# Import des modules fournis
-import libsigma.read_and_write as rw
-import libsigma.classification as cl
-import libsigma.image_visu as visu
-import libsigma.plots as lp
+def rasterisation(my_folder, in_vector, ref_image, out_image, field_name, sptial_resolution, xmin, ymin, xmax, ymax): 
+    """Version exacte de Matthieu GOUBERT"""
+    cmd_pattern = ("gdal_rasterize -a {field_name} "
+               "-tr {sptial_resolution} {sptial_resolution} "
+               "-te {xmin} {ymin} {xmax} {ymax} -ot Byte -of GTiff "
+               "{in_vector} {out_image}")
 
-# Import de tes fonctions personnalisées
-from my_function import * # Chemins des données
-data_dir = "data/projet_eval"
-res_dir = "results"
-fig_dir = "results/figure"
+    cmd = cmd_pattern.format(in_vector=in_vector, xmin=xmin, ymin=ymin, 
+                             xmax=xmax, ymax=ymax, out_image=out_image, 
+                             field_name=field_name, sptial_resolution=sptial_resolution)
+    os.system(cmd)
 
-# Création des dossiers si nécessaires
-os.makedirs(fig_dir, exist_ok=True)
+def calculate_nari_safe(b3, b5):
+    """Calcule le NARI en gérant les divisions par zéro et les valeurs aberrantes."""
+    with np.errstate(divide='ignore', invalid='ignore'):
+        # Formule : $NARI = \frac{(1/B3) - (1/B5)}{(1/B3) + (1/B5)}$
+        nari = (1.0/b3 - 1.0/b5) / (1.0/b3 + 1.0/b5)
+    
+    # Nettoyage des valeurs infinies ou NaN
+    nari = np.nan_to_num(nari, nan=-1.0, posinf=1.0, neginf=-1.0)
+    return nari
+
+def report_to_df(report_dict):
+    """Utilitaire pour transformer les résultats en tableau (Méthode Djiby)"""
+    df = pd.DataFrame(report_dict).transpose()
+    return df.loc[df.index.isin(['2', '3', '4'])]
