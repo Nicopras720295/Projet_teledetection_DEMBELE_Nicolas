@@ -18,10 +18,10 @@ def rasterisation(my_folder, in_vector, ref_image, out_image, field_name, sptial
 def calculate_nari_safe(b3, b5):
     """Calcule le NARI en gérant les divisions par zéro et les valeurs aberrantes."""
     with np.errstate(divide='ignore', invalid='ignore'):
-        # Formule : $NARI = \frac{(1/B3) - (1/B5)}{(1/B3) + (1/B5)}$
+        # Formule : $NARI = \frac{(1/B3) - (1/B5)}{(1/B3) + (1/B5)}$ 
         nari = (1.0/b3 - 1.0/b5) / (1.0/b3 + 1.0/b5)
     
-    # Nettoyage des valeurs infinies ou NaN
+    # Nettoyage des valeurs infinies ou NaN 
     nari = np.nan_to_num(nari, nan=-1.0, posinf=1.0, neginf=-1.0)
     return nari
 
